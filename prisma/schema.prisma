@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Clinic {
+  id                  String   @id @default(uuid())
+  name                String
+  address             String?
+  city                String?
+  phone               String?
+  logoUrl             String?
+  nettuServiceId      String?
+  razorpayKeyId       String?
+  razorpayKeySecret   String?
+  twilioAccountSid    String?
+  twilioAuthToken     String?
+  whatsappFrom        String?
+  reminderTemplate24h String?
+  reminderTemplate1h  String?
+  remindersEnabled    Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  doctors      Doctor[]
+  patients     Patient[]
+  appointments Appointment[]
+}
+
+model Doctor {
+  id              String   @id @default(uuid())
+  clinicId        String
+  fullName        String
+  specialty       String?
+  qualification   String?
+  bio             String?
+  languages       String[]
+  avatarUrl       String?
+  nettuUserId     String?
+  nettuCalendarId String?
+  micrositeSlug   String?  @unique
+  feeInr          Int      @default(500)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  appointments Appointment[]
+}
+
+model Patient {
+  id            String   @id @default(uuid())
+  clinicId      String
+  fullName      String
+  contactNumber String
+  age           Int?
+  gender        String?
+  createdAt     DateTime @default(now())
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  appointments Appointment[]
+
+  @@unique([clinicId, contactNumber])
+}
+
+model Appointment {
+  id              String    @id @default(uuid())
+  clinicId        String
+  patientId       String
+  doctorId        String
+  bookerRelation  String    @default("self")
+  proxyName       String?
+  symptoms        String?
+  notes           String?
+  timeslot        DateTime?
+  durationMinutes Int       @default(15)
+  status          String    @default("tentative")
+  nettuBookingId  String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  clinic    Clinic               @relation(fields: [clinicId], references: [id])
+  patient   Patient              @relation(fields: [patientId], references: [id])
+  doctor    Doctor               @relation(fields: [doctorId], references: [id])
+  history   AppointmentHistory[]
+  reminders Reminder[]
+}
+
+model AppointmentHistory {
+  id                String    @id @default(uuid())
+  appointmentId     String
+  recordedAt        DateTime  @default(now())
+  title             String?
+  consultationNotes String?
+  prescription      Json?
+  followupDate      DateTime?
+  recordedBy        String?
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}
+
+model Reminder {
+  id            String    @id @default(uuid())
+  appointmentId String
+  type          String
+  channel       String
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  status        String    @default("pending")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}

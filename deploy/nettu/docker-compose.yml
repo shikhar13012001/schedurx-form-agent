@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  nettu-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: nettu
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${NETTU_DB_PASSWORD}
+    # No external port — only reachable within this Docker network
+    volumes:
+      - nettu_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  nettu:
+    image: fmeringdal/nettu-scheduler:0.6.0
+    environment:
+      ACCOUNT_API_KEY: ${NETTU_API_KEY}
+      DATABASE_URL: postgresql://postgres:${NETTU_DB_PASSWORD}@nettu-db:5432/nettu
+      PORT: "5000"
+    # Exposed directly — add a domain + Nginx later when ready
+    ports:
+      - "5000:5000"
+    depends_on:
+      nettu-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  nettu_pgdata:

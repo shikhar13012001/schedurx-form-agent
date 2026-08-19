@@ -15,9 +15,6 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN pnpm exec prisma generate
-
 # Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build

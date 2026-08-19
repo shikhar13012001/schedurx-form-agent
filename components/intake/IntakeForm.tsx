@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import * as api from '@/lib/api-client'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 'CLINIC_NOT_FOUND'
 
-interface Clinic {
+export interface Clinic {
   id: string
   name: string
   phone: string | null
@@ -15,14 +16,14 @@ interface Clinic {
   logoUrl: string | null
 }
 
-interface Doctor {
+export interface Doctor {
   id: string
   fullName: string
   specialty: string | null
   avatarUrl: string | null
 }
 
-interface Slot {
+export interface Slot {
   start: string
   end: string
 }
@@ -85,7 +86,7 @@ function buildGCalUrl(slot: string, clinic: Clinic, doctor: Doctor): string {
   return `https://calendar.google.com/calendar/render?${params}`
 }
 
-function formatReviewDate(iso: string): string {
+export function formatReviewDate(iso: string): string {
   return new Date(iso).toLocaleString('en-IN', {
     weekday: 'short',
     day: 'numeric',
@@ -144,7 +145,7 @@ function InputField({
 const inputClass =
   'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F6E56]/40 focus:border-[#0F6E56] min-h-11'
 
-function PrimaryBtn({
+export function PrimaryBtn({
   onClick,
   disabled,
   children,
@@ -173,7 +174,7 @@ function PrimaryBtn({
   )
 }
 
-function BackBtn({ onClick }: { onClick: () => void }) {
+export function BackBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
@@ -225,10 +226,10 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
 
   // Step 0 — fetch clinic data on mount
   useEffect(() => {
-    fetch(`/api/public/clinic/${clinicId}`)
-      .then((r) => (r.ok ? r.json() : null))
+    api
+      .getClinic(clinicId)
       .then((data) => {
-        if (!data || !data.doctors || data.doctors.length === 0) {
+        if (!data.doctors || data.doctors.length === 0) {
           setStep('CLINIC_NOT_FOUND')
           return
         }
@@ -259,20 +260,15 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
     setSlotsLoading(true)
     setSlots([])
     setTimeslot(null)
-    // Build IST midnight-to-midnight window
-    const from = new Date(`${dateStr}T00:00:00+05:30`).toISOString()
-    const to   = new Date(`${dateStr}T23:59:59+05:30`).toISOString()
-    fetch(
-      `/api/public/slots?doctor_id=${selectedDoctor.id}&date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`
-    )
-      .then((r) => (r.ok ? r.json() : { slots: [], schedulerConfigured: false }))
+    api
+      .getSlots(clinicId, selectedDoctor.id, dateStr)
       .then((data) => {
-        setSlots(data.slots ?? [])
-        setSchedulerConfigured(data.schedulerConfigured ?? false)
+        setSlots(data.slots)
+        setSchedulerConfigured(data.schedulerConfigured)
       })
       .catch(() => { setSlots([]); setSchedulerConfigured(false) })
       .finally(() => setSlotsLoading(false))
-  }, [selectedDoctor])
+  }, [clinicId, selectedDoctor])
 
   // Reset date + slots when re-entering step 4
   useEffect(() => {
@@ -299,45 +295,40 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
   }
 
   async function handleSubmit() {
-    if (!clinic || !selectedDoctor) return
+    if (!clinic || !selectedDoctor || !timeslot) return
     setSubmitting(true)
     setSubmitError('')
 
     try {
-      const res = await fetch('/api/intake', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clinicId,
-          doctorId: selectedDoctor.id,
-          patient: {
-            fullName,
-            contactNumber: phone,
-            age: age ? Number(age) : undefined,
-            gender: gender || undefined,
-          },
-          appointment: {
-            bookerRelation,
-            proxyName: bookerRelation === 'proxy' ? proxyName : undefined,
-            symptoms,
-            notes: notes || undefined,
-            timeslot: timeslot || undefined,
-          },
-        }),
+      const result = await api.bookAppointment({
+        clinicId,
+        doctorId: selectedDoctor.id,
+        patient: {
+          fullName,
+          contactNumber: phone,
+          age: age ? Number(age) : undefined,
+          gender: gender || undefined,
+        },
+        appointment: {
+          bookerRelation,
+          proxyName: bookerRelation === 'proxy' ? proxyName : undefined,
+          symptoms,
+          notes: notes || undefined,
+          timeslot,
+        },
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setSubmitError(data.error ?? 'Something went wrong. Please try again.')
-        setSubmitting(false)
-        return
-      }
-
-      setSuccessData(data)
+      // The backend only returns appointment identifiers, not doctor/clinic
+      // details — build the confirmation view from state already in hand.
+      setSuccessData({
+        appointmentId: result.appointmentId,
+        doctor: { fullName: selectedDoctor.fullName, specialty: selectedDoctor.specialty },
+        clinic: { name: clinic.name, address: clinic.address },
+        timeslot: result.timeslot,
+      })
       setStep(6)
-    } catch {
-      setSubmitError('Network error. Please check your connection and try again.')
+    } catch (err) {
+      setSubmitError(err instanceof api.ApiError ? err.message : 'Network error. Please check your connection and try again.')
       setSubmitting(false)
     }
   }
@@ -783,7 +774,7 @@ function getSelectableDates(): { value: string; label: string }[] {
   return dates
 }
 
-function SlotStep({
+export function SlotStep({
   doctor,
   selectedDate,
   onDateChange,
@@ -887,26 +878,19 @@ function SlotStep({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => { onSelect(null); onContinue() }}
-            className="block w-full text-center text-xs text-[#6b7280] underline underline-offset-2 mb-4 min-h-9 leading-9"
-          >
-            Skip — clinic will confirm my time
-          </button>
         </div>
       )}
 
       {showEmpty && (
         <div className="rounded-xl bg-[#E1F5EE] border border-[#0F6E56]/20 p-4 mb-4 text-sm">
           <p className="font-semibold text-[#0F6E56] mb-1">No slots available on this day</p>
-          <p className="text-[#6b7280] text-xs">Try a different date, or continue and the clinic will confirm your time.</p>
+          <p className="text-[#6b7280] text-xs">Please try a different date.</p>
         </div>
       )}
 
       <div className="space-y-3">
-        <PrimaryBtn onClick={onContinue} disabled={!dateSelected && !selected}>
-          {selected ? 'Continue with selected time' : 'Continue without time'}
+        <PrimaryBtn onClick={onContinue} disabled={!selected}>
+          Continue with selected time
         </PrimaryBtn>
         <BackBtn onClick={onBack} />
       </div>

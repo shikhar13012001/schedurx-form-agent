@@ -177,3 +177,43 @@ export interface CommsLinks {
 export async function getCommsLinks(clinicId: string, appointmentId: string): Promise<CommsLinks> {
   return request<CommsLinks>(`/appointments/${encodeURIComponent(appointmentId)}/comms-links?clinicId=${encodeURIComponent(clinicId)}`)
 }
+
+// ─── Pay-first token bookings (Phase 3) ─────────────────────────────────────
+// A booking a staff member made on the patient's behalf with "Lock slot with
+// token" on has no Appointment row yet — just a held slot and this pending
+// row — until the patient pays here. Reached via the link sent by SMS/
+// WhatsApp (see schedurx-backend's api-v1-appointments.js), not the
+// clinicId/idOrPhone route above, since there's no appointment to look up.
+export interface PendingBooking {
+  id: string
+  status: 'pending' | 'completed' | 'expired' | 'cancelled'
+  timeslot: string | null
+  durationMinutes: number
+  amountPaise: number
+  expiresAt: string
+  patientName: string | null
+  clinic: { id: string; name: string } | null
+  doctor: { id: string; fullName: string } | null
+}
+
+export async function getPendingBooking(clinicId: string, pendingBookingId: string): Promise<PendingBooking> {
+  return request<{ pendingBooking: PendingBooking }>(
+    `/pending-bookings/${encodeURIComponent(pendingBookingId)}?clinicId=${encodeURIComponent(clinicId)}`,
+  ).then((data) => data.pendingBooking)
+}
+
+// Deliberately creates a FRESH Stripe Checkout Session on every call rather
+// than reusing one from booking time (never persisted — see
+// createPendingTokenBooking's own comment) — always valid regardless of how
+// long ago the link was sent or how many times this page was reopened.
+export async function createPendingBookingCheckoutSession(
+  clinicId: string,
+  pendingBookingId: string,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<{ checkoutUrl: string }> {
+  return request(`/pending-bookings/${encodeURIComponent(pendingBookingId)}/checkout-session`, {
+    method: 'POST',
+    body: JSON.stringify({ clinicId, successUrl, cancelUrl }),
+  })
+}

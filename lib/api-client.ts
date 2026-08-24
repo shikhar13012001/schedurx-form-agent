@@ -165,3 +165,15 @@ export async function cancelAppointment(clinicId: string, appointmentId: string,
     body: JSON.stringify({ clinicId, reason }),
   })
 }
+
+// Thank-you page CTAs (Phase 7): a wa.me deep link straight into this
+// booking's own Thread, and the clinic's Google review link — either can be
+// null (no WhatsApp sender / no review link configured for this clinic yet).
+export interface CommsLinks {
+  reviewUrl: string | null
+  textCommsUrl: string | null
+}
+
+export async function getCommsLinks(clinicId: string, appointmentId: string): Promise<CommsLinks> {
+  return request<CommsLinks>(`/appointments/${encodeURIComponent(appointmentId)}/comms-links?clinicId=${encodeURIComponent(clinicId)}`)
+}

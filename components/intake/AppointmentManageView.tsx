@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as api from '@/lib/api-client'
 import { SlotStep, PrimaryBtn, formatReviewDate } from './IntakeForm'
 import type { Doctor, Slot } from './IntakeForm'
@@ -24,9 +24,19 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [commsLinks, setCommsLinks] = useState<api.CommsLinks | null>(null)
 
   const { appointment, doctor, clinic } = summary
   const isBooked = appointment.status === 'booked'
+
+  // Best-effort — a clinic with no review link or no WhatsApp sender
+  // configured yet just gets fewer CTAs, not an error on the page.
+  useEffect(() => {
+    api
+      .getCommsLinks(clinicId, appointmentId)
+      .then(setCommsLinks)
+      .catch(() => setCommsLinks(null))
+  }, [clinicId, appointmentId])
 
   function fetchSlotsForDate(dateStr: string) {
     if (!doctor) return
@@ -111,6 +121,31 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
                 </div>
 
                 {error && <p className="text-xs text-red-500 text-center mb-3 bg-red-50 rounded-lg py-2 px-3">{error}</p>}
+
+                {isBooked && (commsLinks?.textCommsUrl || commsLinks?.reviewUrl) && (
+                  <div className="flex gap-2 mb-3">
+                    {commsLinks.textCommsUrl && (
+                      <a
+                        href={commsLinks.textCommsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center rounded-lg border border-[#0F6E56]/20 bg-[#E1F5EE] px-3 py-2.5 text-sm font-medium text-[#0F6E56]"
+                      >
+                        Message us
+                      </a>
+                    )}
+                    {commsLinks.reviewUrl && (
+                      <a
+                        href={commsLinks.reviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-medium text-[#1a1a1a]"
+                      >
+                        Leave a review
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {isBooked && (
                   <div className="space-y-3">

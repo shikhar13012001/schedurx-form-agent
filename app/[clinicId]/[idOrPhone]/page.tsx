@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { DM_Serif_Display, DM_Sans } from 'next/font/google'
 import IntakeForm from '@/components/intake/IntakeForm'
 import AppointmentManageView from '@/components/intake/AppointmentManageView'
@@ -16,6 +17,22 @@ const dmSans = DM_Sans({
 })
 
 type RouteParams = { clinicId: string; idOrPhone: string }
+
+// A real appointment id (apt_<uuid>) that no longer resolves — deleted,
+// wrong clinic, a stale/garbled link — used to fall through to the intake
+// wizard (same "not an appointment id, must be the pre-booking entry point"
+// reasoning IntakeForm itself is built on), but IntakeForm's Mobile field is
+// a locked display of whatever this route hands it as `phone` — never an
+// editable input (see its own "Wrong number? Ask the clinic to resend your
+// booking link" hint) — so a non-phone value there produced a booking form
+// nobody could ever submit: "apt_2201f6d0-c6d5-... must be a valid 10-digit
+// Indian mobile number", with no way to fix it. Only enter the intake
+// wizard when this segment is actually phone-shaped; anything else was
+// meant as an appointment id that just doesn't resolve, so a real
+// not-found page is the honest answer, not a broken form.
+function looksLikePhone(value: string): boolean {
+  return /^\+?[\d\s-]{7,15}$/.test(value)
+}
 
 // Per-clinic, per-appointment title/description so a link shared in WhatsApp
 // (e.g. a reschedule-manage link) previews as "Appointment with Dr. X at
@@ -80,12 +97,15 @@ export default async function ClinicPatientPage({
     appointment = null
   }
 
+  const decoded = decodeURIComponent(idOrPhone)
+  if (!appointment && !looksLikePhone(decoded)) notFound()
+
   return (
     <div className={`${dmSerif.variable} ${dmSans.variable}`}>
       {appointment ? (
         <AppointmentManageView clinicId={clinicId} appointmentId={idOrPhone} initial={appointment} />
       ) : (
-        <IntakeForm clinicId={clinicId} phone={decodeURIComponent(idOrPhone)} preSelectedDoctorId={doctor} />
+        <IntakeForm clinicId={clinicId} phone={decoded} preSelectedDoctorId={doctor} />
       )}
     </div>
   )

@@ -120,8 +120,26 @@ export async function getSlots(clinicId: string, doctorId: string, date: string)
 
 // ─── Booking ────────────────────────────────────────────────────────────────
 
-export async function bookAppointment(input: BookingInput): Promise<{ appointmentId: string; timeslot: string }> {
-  const data = await request<{ appointment: { appointmentId: string; start: string } }>('/appointments', {
+// The backend's response shape branches on the clinic's own token-payment
+// policy (Clinic.tokenMoneyEnabled) — the caller can't know in advance which
+// one it'll get back.
+export type BookAppointmentResult =
+  | { kind: 'confirmed'; appointmentId: string; timeslot: string }
+  | { kind: 'pending_payment'; pendingBookingId: string }
+
+export async function bookAppointment(input: BookingInput): Promise<BookAppointmentResult> {
+  // These only back the Stripe Checkout Session created at booking time,
+  // which we never actually send the patient to — a token-payment booking
+  // redirects to our own /[clinicId]/pay/[pendingBookingId] page instead,
+  // which creates its own fresh session with the real success/cancel URLs.
+  // They just need to be valid so the backend doesn't fall back to its own
+  // (form-agent-unaware) default.
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const fallbackUrl = `${origin}/${input.clinicId}`
+
+  const data = await request<
+    { appointment: { appointmentId: string; start: string } } | { pendingBookingId: string; checkoutUrl: string; amountPaise: number }
+  >('/appointments', {
     method: 'POST',
     body: JSON.stringify({
       clinicId: input.clinicId,
@@ -137,9 +155,15 @@ export async function bookAppointment(input: BookingInput): Promise<{ appointmen
       notes: input.appointment.notes,
       bookerRelation: input.appointment.bookerRelation,
       proxyName: input.appointment.proxyName,
+      successUrl: fallbackUrl,
+      cancelUrl: fallbackUrl,
     }),
   })
-  return { appointmentId: data.appointment.appointmentId, timeslot: data.appointment.start }
+
+  if ('pendingBookingId' in data) {
+    return { kind: 'pending_payment', pendingBookingId: data.pendingBookingId }
+  }
+  return { kind: 'confirmed', appointmentId: data.appointment.appointmentId, timeslot: data.appointment.start }
 }
 
 // ─── Manage an existing booking (confirmation/reschedule/cancel page) ───────

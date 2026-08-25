@@ -22,7 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   try {
     const pending = await api.getPendingBooking(clinicId, pendingBookingId)
     const title = pending.clinic ? `Complete your booking — ${pending.clinic.name}` : 'Complete your booking'
-    return { title, description: 'Pay to confirm your appointment.' }
+    const description = 'Pay to confirm your appointment.'
+    return { title, description, openGraph: { title, description }, twitter: { title, description } }
   } catch {
     return {}
   }
@@ -34,8 +35,12 @@ export default async function PendingBookingPage({ params }: { params: Promise<R
   let pending: api.PendingBooking
   try {
     pending = await api.getPendingBooking(clinicId, pendingBookingId)
-  } catch {
-    notFound()
+  } catch (err) {
+    // Only a real 404 (bad/unknown pending-booking id) is genuinely "not
+    // found" — anything else (backend down, network blip) should surface as
+    // a retryable error via error.tsx, not a dead link on a payment page.
+    if (err instanceof api.ApiError && err.status === 404) notFound()
+    throw err
   }
 
   return (

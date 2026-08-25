@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import * as api from '@/lib/api-client'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 'CLINIC_NOT_FOUND'
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 'CLINIC_NOT_FOUND' | 'CLINIC_LOAD_ERROR'
 
 export interface Clinic {
   id: string
@@ -45,22 +46,6 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2)
-}
-
-function getRelativeDate(iso: string): string {
-  const slot = new Date(iso)
-  const today = new Date()
-  const slotDay = new Date(slot.getFullYear(), slot.getMonth(), slot.getDate())
-  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const diff = Math.round((slotDay.getTime() - todayDay.getTime()) / 86400000)
-  if (diff === 0) return 'Today'
-  if (diff === 1) return 'Tomorrow'
-  return slot.toLocaleDateString('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'Asia/Kolkata',
-  })
 }
 
 function getSlotTime(iso: string): string {
@@ -195,6 +180,7 @@ export interface IntakeFormProps {
 }
 
 export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: IntakeFormProps) {
+  const router = useRouter()
   const [step, setStep] = useState<Step>(0)
   const [clinic, setClinic] = useState<Clinic | null>(null)
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -224,8 +210,11 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Step 0 — fetch clinic data on mount
-  useEffect(() => {
+  // Step 0 — fetch clinic data on mount. A real 404 (bad/unknown clinic id)
+  // is genuinely "not found"; any other failure (backend momentarily down,
+  // network blip) is transient — showing the same dead-end there would tell
+  // a patient to "contact the clinic" over something a retry would fix.
+  const loadClinic = useCallback(() => {
     api
       .getClinic(clinicId)
       .then((data) => {
@@ -251,8 +240,12 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
           setStep(1)
         }
       })
-      .catch(() => setStep('CLINIC_NOT_FOUND'))
+      .catch((err) => setStep(err instanceof api.ApiError && err.status === 404 ? 'CLINIC_NOT_FOUND' : 'CLINIC_LOAD_ERROR'))
   }, [clinicId, preSelectedDoctorId])
+
+  useEffect(() => {
+    loadClinic()
+  }, [loadClinic])
 
   // Step 4 — fetch slots for a specific date when the user picks one
   const fetchSlotsForDate = useCallback((dateStr: string) => {
@@ -270,14 +263,14 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
       .finally(() => setSlotsLoading(false))
   }, [clinicId, selectedDoctor])
 
-  // Reset date + slots when re-entering step 4
-  useEffect(() => {
-    if (step === 4) {
-      setSelectedDate('')
-      setSlots([])
-      setTimeslot(null)
-    }
-  }, [step])
+  // Always land on step 4 with a blank date/slot pick, whether arriving
+  // forward (from symptoms) or back (from the review step).
+  function goToStep4() {
+    setSelectedDate('')
+    setSlots([])
+    setTimeslot(null)
+    setStep(4)
+  }
 
   function validateStep2(): boolean {
     const errs: Record<string, string> = {}
@@ -318,6 +311,14 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
         },
       })
 
+      // This clinic requires a token payment before the booking is final —
+      // no Appointment exists yet, just a held slot. Send the patient to pay,
+      // rather than showing a confirmation for a booking that isn't real yet.
+      if (result.kind === 'pending_payment') {
+        router.push(`/${clinicId}/pay/${result.pendingBookingId}`)
+        return
+      }
+
       // The backend only returns appointment identifiers, not doctor/clinic
       // details — build the confirmation view from state already in hand.
       setSuccessData({
@@ -336,7 +337,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
   // ─── Header ────────────────────────────────────────────────────────────────
 
   const headerSubtitle =
-    step !== 0 && step !== 'CLINIC_NOT_FOUND' && step !== 6 && selectedDoctor
+    step !== 0 && step !== 'CLINIC_NOT_FOUND' && step !== 'CLINIC_LOAD_ERROR' && step !== 6 && selectedDoctor
       ? `Dr. ${selectedDoctor.fullName}`
       : step === 6 && successData
       ? `Dr. ${successData.doctor.fullName}`
@@ -372,6 +373,14 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
           <div className="bg-white px-4 pt-5 pb-6">
             {step === 0 && <LoadingStep />}
             {step === 'CLINIC_NOT_FOUND' && <ClinicNotFoundStep />}
+            {step === 'CLINIC_LOAD_ERROR' && (
+              <ClinicLoadErrorStep
+                onRetry={() => {
+                  setStep(0)
+                  loadClinic()
+                }}
+              />
+            )}
             {step === 1 && (
               <SelectDoctorStep
                 doctors={doctors}
@@ -414,7 +423,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
                 errors={errors}
                 onBack={() => { setErrors({}); setStep(2) }}
                 onContinue={() => {
-                  if (validateStep3()) { setErrors({}); setStep(4) }
+                  if (validateStep3()) { setErrors({}); goToStep4() }
                 }}
               />
             )}
@@ -434,7 +443,6 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
             )}
             {step === 5 && (
               <ReviewStep
-                clinic={clinic!}
                 doctor={selectedDoctor!}
                 phone={phone}
                 fullName={fullName}
@@ -446,7 +454,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
                 timeslot={timeslot}
                 submitting={submitting}
                 error={submitError}
-                onBack={() => setStep(4)}
+                onBack={goToStep4}
                 onSubmit={handleSubmit}
               />
             )}
@@ -482,6 +490,22 @@ function ClinicNotFoundStep() {
     <div className="py-8 text-center">
       <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Clinic not found</p>
       <p className="text-sm text-[#6b7280]">Please check your link or contact the clinic.</p>
+    </div>
+  )
+}
+
+function ClinicLoadErrorStep({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="py-8 text-center">
+      <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Couldn&apos;t load booking page</p>
+      <p className="text-sm text-[#6b7280] mb-4">Something went wrong on our end. Please try again.</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-lg bg-[#0F6E56] px-5 py-2.5 text-sm font-semibold text-white"
+      >
+        Try again
+      </button>
     </div>
   )
 }
@@ -899,7 +923,6 @@ export function SlotStep({
 }
 
 function ReviewStep({
-  clinic,
   doctor,
   phone,
   fullName,
@@ -914,7 +937,6 @@ function ReviewStep({
   onBack,
   onSubmit,
 }: {
-  clinic: Clinic
   doctor: Doctor
   phone: string
   fullName: string

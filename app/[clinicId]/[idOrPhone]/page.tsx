@@ -93,8 +93,16 @@ export default async function ClinicPatientPage({
   let appointment: api.AppointmentSummary | null = null
   try {
     appointment = await api.getAppointment(clinicId, idOrPhone)
-  } catch {
-    appointment = null
+  } catch (err) {
+    // A real 404 means this segment isn't an appointment id — fall through
+    // to the phone-shaped-id check below. Anything else (backend down,
+    // network blip) isn't "not found" — let it bubble to error.tsx instead
+    // of silently treating a transient outage as a dead link.
+    if (err instanceof api.ApiError && err.status === 404) {
+      appointment = null
+    } else {
+      throw err
+    }
   }
 
   const decoded = decodeURIComponent(idOrPhone)

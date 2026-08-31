@@ -20,6 +20,17 @@ const nextConfig: NextConfig = {
         source: '/api/v1/public/:path*',
         destination: `${BACKEND_API_ORIGIN}/api/v1/public/:path*`,
       },
+      // Signed, single-use rebook links sent over WhatsApp/SMS (see
+      // schedurx-backend's src/lib/rebook-token.js) point at this app's own
+      // domain rather than the backend's, so a patient tapping the link
+      // sees book.schedurx.com the whole way through instead of briefly
+      // hitting api.schedurx.com before the redirect. The backend still
+      // does the real HMAC verification and 302s on to the actual booking
+      // page — this just keeps that hop same-origin.
+      {
+        source: '/r/:token',
+        destination: `${BACKEND_API_ORIGIN}/r/:token`,
+      },
     ]
   },
 };

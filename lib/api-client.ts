@@ -64,6 +64,11 @@ export interface Slot {
 export interface BookingInput {
   clinicId: string
   doctorId: string
+  // Opaque missed-call-attribution token, forwarded verbatim from the
+  // ?mct= query param on the booking link when present — see
+  // app/[clinicId]/[idOrPhone]/page.tsx. The backend verifies signature,
+  // expiry, and phone/clinic match; this client never inspects it.
+  missedCallToken?: string
   patient: { fullName: string; contactNumber: string; age?: number; gender?: string }
   appointment: {
     bookerRelation: 'self' | 'proxy'
@@ -144,6 +149,10 @@ export async function bookAppointment(input: BookingInput): Promise<BookAppointm
     body: JSON.stringify({
       clinicId: input.clinicId,
       doctorId: input.doctorId,
+      // JSON.stringify drops an undefined-valued key entirely, so this
+      // naturally omits the field when there's no mct token rather than
+      // sending an explicit null.
+      missedCallToken: input.missedCallToken,
       start: input.appointment.timeslot,
       patient: {
         phone: input.patient.contactNumber,

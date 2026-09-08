@@ -189,9 +189,13 @@ export interface IntakeFormProps {
   clinicId: string
   phone: string
   preSelectedDoctorId?: string
+  // Opaque missed-call-attribution token forwarded as-is on booking — see
+  // app/[clinicId]/[idOrPhone]/page.tsx's own comment. Not read or
+  // validated here; the backend does that.
+  missedCallToken?: string
 }
 
-export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: IntakeFormProps) {
+export default function IntakeForm({ clinicId, phone, preSelectedDoctorId, missedCallToken }: IntakeFormProps) {
   const router = useRouter()
   const [step, setStep] = useState<Step>(0)
   const [clinic, setClinic] = useState<Clinic | null>(null)
@@ -308,6 +312,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
       const result = await api.bookAppointment({
         clinicId,
         doctorId: selectedDoctor.id,
+        missedCallToken,
         patient: {
           fullName,
           contactNumber: phone,

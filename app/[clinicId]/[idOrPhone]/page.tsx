@@ -73,10 +73,14 @@ export default async function ClinicPatientPage({
   searchParams,
 }: {
   params: Promise<{ clinicId: string; idOrPhone: string }>
-  searchParams: Promise<{ doctor?: string }>
+  // mct: opaque, signed missed-call-attribution token — see
+  // schedurx-backend's comms-workflow-service.js sendMissedCallFollowup.
+  // This app never decodes it, just forwards it verbatim on booking so the
+  // backend can trace a booking back to the missed call that generated it.
+  searchParams: Promise<{ doctor?: string; mct?: string }>
 }) {
   const { clinicId, idOrPhone } = await params
-  const { doctor } = await searchParams
+  const { doctor, mct } = await searchParams
 
   let appointment: api.AppointmentSummary | null = null
   try {
@@ -99,6 +103,6 @@ export default async function ClinicPatientPage({
   return appointment ? (
     <AppointmentManageView clinicId={clinicId} appointmentId={idOrPhone} initial={appointment} />
   ) : (
-    <IntakeForm clinicId={clinicId} phone={decoded} preSelectedDoctorId={doctor} />
+    <IntakeForm clinicId={clinicId} phone={decoded} preSelectedDoctorId={doctor} missedCallToken={mct} />
   )
 }

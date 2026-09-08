@@ -42,43 +42,43 @@ export default function PendingBookingPayView({ clinicId, pendingBookingId, init
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-4 px-3" style={{ fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}>
+    <div className="min-h-screen bg-sx-canvas px-3 py-4">
       <div className="mx-auto max-w-[440px]">
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#0F6E56] px-4 py-3 text-white">
-            <p className="font-semibold text-base leading-tight">{clinic?.name ?? 'ScheduRx'}</p>
-            {doctor && <p className="text-xs text-white/70 mt-0.5">Dr. {doctor.fullName}</p>}
+        <div className="overflow-hidden rounded-[32px] shadow-[0_1px_2px_rgba(24,24,24,0.02),0_16px_44px_rgba(24,24,24,0.07)]">
+          <div className="bg-sx-charcoal px-5 py-4 text-white">
+            <p className="text-base font-medium leading-tight tracking-[-0.01em]">{clinic?.name ?? 'ScheduRx'}</p>
+            {doctor && <p className="mt-0.5 text-xs text-white/60">Dr. {doctor.fullName}</p>}
           </div>
 
-          <div className="bg-white px-4 pt-5 pb-6">
+          <div className="bg-sx-white px-5 pb-6 pt-5">
             {justPaid || status === 'completed' ? (
-              <div className="text-center py-4">
-                <h1 className="text-xl font-bold text-[#1a1a1a] mb-2" style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}>
+              <div className="py-4 text-center">
+                <h1 className="mb-2 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
                   Payment received
                 </h1>
-                <p className="text-sm text-[#6b7280]">Your appointment is confirmed. You&apos;ll get a WhatsApp message with the details shortly.</p>
+                <p className="text-sm text-sx-muted">Your appointment is confirmed. You&apos;ll get a WhatsApp message with the details shortly.</p>
               </div>
             ) : status === 'expired' ? (
-              <div className="text-center py-4">
-                <h1 className="text-xl font-bold text-[#1a1a1a] mb-2" style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}>
+              <div className="py-4 text-center">
+                <h1 className="mb-2 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
                   This link has expired
                 </h1>
-                <p className="text-sm text-[#6b7280]">The held slot was released. Please contact {clinic?.name ?? 'the clinic'} to book again.</p>
+                <p className="text-sm text-sx-muted">The held slot was released. Please contact {clinic?.name ?? 'the clinic'} to book again.</p>
               </div>
             ) : status === 'cancelled' ? (
-              <div className="text-center py-4">
-                <h1 className="text-xl font-bold text-[#1a1a1a] mb-2" style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}>
+              <div className="py-4 text-center">
+                <h1 className="mb-2 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
                   Booking cancelled
                 </h1>
-                <p className="text-sm text-[#6b7280]">This booking is no longer awaiting payment.</p>
+                <p className="text-sm text-sx-muted">This booking is no longer awaiting payment.</p>
               </div>
             ) : (
               <div>
-                <h1 className="text-xl font-bold text-[#1a1a1a] mb-4" style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}>
+                <h1 className="mb-4 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
                   Complete your booking
                 </h1>
 
-                <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
+                <div className="mb-5 overflow-hidden rounded-[22px] border border-sx-stone-100">
                   {[
                     { label: 'Patient', value: patientName ?? '—' },
                     { label: 'Doctor', value: doctor ? `Dr. ${doctor.fullName}` : '—' },
@@ -86,22 +86,24 @@ export default function PendingBookingPayView({ clinicId, pendingBookingId, init
                     { label: 'Time', value: timeslot ? formatReviewDate(timeslot) : 'To be confirmed' },
                     { label: 'Amount due', value: `₹${amountRupees}` },
                   ].map((row, i, arr) => (
-                    <div key={i} className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                      <span className="text-xs text-[#6b7280] shrink-0 pt-0.5">{row.label}</span>
-                      <span className="text-sm text-[#1a1a1a] text-right">{row.value}</span>
+                    <div key={i} className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-sx-stone-100' : ''}`}>
+                      <span className="shrink-0 pt-0.5 text-xs text-sx-muted">{row.label}</span>
+                      <span className="text-right text-sm text-sx-charcoal">{row.value}</span>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-xs text-[#6b7280] mb-4">This slot is held for you but not yet confirmed — pay to lock it in.</p>
+                <p className="mb-4 text-xs text-sx-muted">This slot is held for you but not yet confirmed — pay to lock it in.</p>
 
-                {error && <p className="text-xs text-red-500 text-center mb-3 bg-red-50 rounded-lg py-2 px-3">{error}</p>}
+                {error && <p className="mb-3 rounded-[16px] bg-sx-danger-soft px-3 py-2 text-center text-xs text-sx-danger">{error}</p>}
 
+                {/* Pay now is the single climactic action of this entire page —
+                    the only orange full-width surface, deliberately. */}
                 <button
                   type="button"
                   onClick={payNow}
                   disabled={busy}
-                  className="w-full rounded-lg bg-[#EC6B25] px-4 py-3.5 text-sm font-semibold text-white min-h-12 disabled:opacity-60"
+                  className="min-h-[56px] w-full rounded-full bg-sx-orange px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-sx-orange-deep disabled:opacity-60"
                 >
                   {busy ? 'Redirecting to payment…' : `Pay ₹${amountRupees} now`}
                 </button>

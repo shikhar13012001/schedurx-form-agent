@@ -1,20 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { DM_Serif_Display, DM_Sans } from 'next/font/google'
 import IntakeForm from '@/components/intake/IntakeForm'
 import AppointmentManageView from '@/components/intake/AppointmentManageView'
 import * as api from '@/lib/api-client'
-
-const dmSerif = DM_Serif_Display({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-dm-serif',
-})
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-dm-sans',
-})
 
 type RouteParams = { clinicId: string; idOrPhone: string }
 
@@ -108,13 +96,9 @@ export default async function ClinicPatientPage({
   const decoded = decodeURIComponent(idOrPhone)
   if (!appointment && !looksLikePhone(decoded)) notFound()
 
-  return (
-    <div className={`${dmSerif.variable} ${dmSans.variable}`}>
-      {appointment ? (
-        <AppointmentManageView clinicId={clinicId} appointmentId={idOrPhone} initial={appointment} />
-      ) : (
-        <IntakeForm clinicId={clinicId} phone={decoded} preSelectedDoctorId={doctor} />
-      )}
-    </div>
+  return appointment ? (
+    <AppointmentManageView clinicId={clinicId} appointmentId={idOrPhone} initial={appointment} />
+  ) : (
+    <IntakeForm clinicId={clinicId} phone={decoded} preSelectedDoctorId={doctor} />
   )
 }

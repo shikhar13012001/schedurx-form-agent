@@ -87,16 +87,16 @@ export function formatReviewDate(iso: string): string {
 
 function ProgressDots({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-1.5 bg-white px-4 py-3 border-b border-gray-100">
+    <div className="flex items-center justify-center gap-1.5 border-b border-sx-stone-100 bg-sx-white px-4 py-3">
       {[1, 2, 3, 4, 5].map((s) => (
         <div
           key={s}
           className={
             s === currentStep
-              ? 'h-2 w-6 rounded-full bg-[#0F6E56] transition-all'
+              ? 'h-2 w-6 rounded-full bg-sx-orange transition-all'
               : s < currentStep
-              ? 'h-2 w-2 rounded-full bg-[#0F6E56]'
-              : 'h-2 w-2 rounded-full bg-[#0F6E56]/25'
+              ? 'h-2 w-2 rounded-full bg-sx-orange'
+              : 'h-2 w-2 rounded-full bg-sx-stone-200'
           }
         />
       ))}
@@ -117,36 +117,45 @@ function InputField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-[#1a1a1a]">
+      <label className="block text-sm font-medium text-sx-charcoal">
         {label}
-        {required && <span className="ml-0.5 text-[#0F6E56]">*</span>}
+        {required && <span className="ml-0.5 text-sx-orange">*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-[#6b7280]">{hint}</p>}
+      {hint && <p className="text-xs text-sx-muted">{hint}</p>}
     </div>
   )
 }
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F6E56]/40 focus:border-[#0F6E56] min-h-11'
+  'w-full rounded-[22px] border border-sx-stone-200 bg-sx-white px-4 py-2.5 text-sm text-sx-charcoal placeholder:text-sx-stone focus:outline-none focus:ring-2 focus:ring-sx-orange/30 focus:border-sx-orange min-h-11'
 
+// Only the true climactic action of a given screen (Confirm booking, Pay
+// now) earns the vivid orange treatment — ScheduRx Master Brand Soul,
+// section 17: "Only one action per composition should usually earn the
+// vivid orange treatment." Every intermediate "Continue" through the
+// wizard uses the calmer charcoal pill instead.
 export function PrimaryBtn({
   onClick,
   disabled,
   children,
   loading,
+  variant = 'charcoal',
 }: {
   onClick?: () => void
   disabled?: boolean
   children: React.ReactNode
   loading?: boolean
+  variant?: 'charcoal' | 'orange'
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className="w-full rounded-lg bg-[#0F6E56] px-4 py-3 text-sm font-semibold text-white min-h-11 disabled:opacity-60 flex items-center justify-center gap-2"
+      className={`flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white transition-colors disabled:opacity-60 ${
+        variant === 'orange' ? 'bg-sx-orange hover:bg-sx-orange-deep' : 'bg-sx-charcoal hover:bg-sx-charcoal/90'
+      }`}
     >
       {loading && (
         <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -164,9 +173,12 @@ export function BackBtn({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-[#6b7280] min-h-11"
+      className="flex min-h-[56px] w-full items-center justify-center gap-1.5 rounded-full bg-sx-stone-50 px-6 py-3.5 text-sm font-medium text-sx-charcoal transition-colors hover:bg-sx-stone-100"
     >
-      ← Back
+      <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+        <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Back
     </button>
   )
 }
@@ -349,20 +361,17 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="min-h-screen bg-gray-100 py-4 px-3"
-      style={{ fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}
-    >
+    <div className="min-h-screen bg-sx-canvas px-3 py-4">
       <div className="mx-auto max-w-[440px]">
         {/* Card */}
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          {/* Teal Header */}
-          <div className="bg-[#0F6E56] px-4 py-3 text-white">
-            <p className="font-semibold text-base leading-tight">
-              {clinic?.name ?? 'ScheduRX'}
+        <div className="overflow-hidden rounded-[32px] shadow-[0_1px_2px_rgba(24,24,24,0.02),0_16px_44px_rgba(24,24,24,0.07)]">
+          {/* Charcoal header */}
+          <div className="bg-sx-charcoal px-5 py-4 text-white">
+            <p className="text-base font-medium leading-tight tracking-[-0.01em]">
+              {clinic?.name ?? 'ScheduRx'}
             </p>
             {headerSubtitle && (
-              <p className="text-xs text-white/70 mt-0.5">{headerSubtitle}</p>
+              <p className="mt-0.5 text-xs text-white/60">{headerSubtitle}</p>
             )}
           </div>
 
@@ -370,7 +379,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
           {showProgress && <ProgressDots currentStep={step as number} />}
 
           {/* Step content */}
-          <div className="bg-white px-4 pt-5 pb-6">
+          <div className="bg-sx-white px-5 pb-6 pt-5">
             {step === 0 && <LoadingStep />}
             {step === 'CLINIC_NOT_FOUND' && <ClinicNotFoundStep />}
             {step === 'CLINIC_LOAD_ERROR' && (
@@ -477,7 +486,7 @@ export default function IntakeForm({ clinicId, phone, preSelectedDoctorId }: Int
 function LoadingStep() {
   return (
     <div className="flex justify-center py-12">
-      <svg className="h-8 w-8 animate-spin text-[#0F6E56]" viewBox="0 0 24 24" fill="none">
+      <svg className="h-8 w-8 animate-spin text-sx-orange" viewBox="0 0 24 24" fill="none">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
       </svg>
@@ -488,8 +497,8 @@ function LoadingStep() {
 function ClinicNotFoundStep() {
   return (
     <div className="py-8 text-center">
-      <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Clinic not found</p>
-      <p className="text-sm text-[#6b7280]">Please check your link or contact the clinic.</p>
+      <p className="mb-2 text-lg font-medium text-sx-charcoal">Clinic not found</p>
+      <p className="text-sm text-sx-muted">Please check your link or contact the clinic.</p>
     </div>
   )
 }
@@ -497,12 +506,12 @@ function ClinicNotFoundStep() {
 function ClinicLoadErrorStep({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="py-8 text-center">
-      <p className="text-lg font-semibold text-[#1a1a1a] mb-2">Couldn&apos;t load booking page</p>
-      <p className="text-sm text-[#6b7280] mb-4">Something went wrong on our end. Please try again.</p>
+      <p className="mb-2 text-lg font-medium text-sx-charcoal">Couldn&apos;t load booking page</p>
+      <p className="mb-4 text-sm text-sx-muted">Something went wrong on our end. Please try again.</p>
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-lg bg-[#0F6E56] px-5 py-2.5 text-sm font-semibold text-white"
+        className="rounded-full bg-sx-charcoal px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sx-charcoal/90"
       >
         Try again
       </button>
@@ -523,41 +532,38 @@ function SelectDoctorStep({
 }) {
   return (
     <div>
-      <h1
-        className="text-xl font-bold text-[#1a1a1a] mb-1"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-1 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
         Who would you like to see?
       </h1>
-      <p className="text-sm text-[#6b7280] mb-4">Select a doctor to continue</p>
+      <p className="mb-4 text-sm text-sx-muted">Select a doctor to continue</p>
 
-      <div className="space-y-3 mb-5">
+      <div className="mb-5 space-y-3">
         {doctors.map((doc) => (
           <button
             key={doc.id}
             type="button"
             onClick={() => onSelect(doc)}
-            className={`w-full text-left rounded-xl border-2 p-3 flex items-center gap-3 min-h-[64px] transition-colors ${
+            className={`flex min-h-[64px] w-full items-center gap-3 rounded-[26px] border p-3 text-left transition-colors ${
               selected?.id === doc.id
-                ? 'border-[#0F6E56] bg-[#E1F5EE]'
-                : 'border-gray-200 bg-white'
+                ? 'border-sx-orange bg-sx-orange-tint'
+                : 'border-sx-stone-200 bg-sx-white'
             }`}
           >
             {/* Avatar */}
-            <div className="h-11 w-11 rounded-full bg-[#0F6E56]/10 flex items-center justify-center shrink-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sx-stone-100">
               {doc.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={doc.avatarUrl} alt={doc.fullName} className="h-11 w-11 rounded-full object-cover" />
               ) : (
-                <span className="text-sm font-bold text-[#0F6E56]">{getInitials(doc.fullName)}</span>
+                <span className="text-sm font-semibold text-sx-charcoal">{getInitials(doc.fullName)}</span>
               )}
             </div>
             <div>
-              <p className="font-semibold text-sm text-[#1a1a1a]">Dr. {doc.fullName}</p>
-              {doc.specialty && <p className="text-xs text-[#6b7280] mt-0.5">{doc.specialty}</p>}
+              <p className="text-sm font-medium text-sx-charcoal">Dr. {doc.fullName}</p>
+              {doc.specialty && <p className="mt-0.5 text-xs text-sx-muted">{doc.specialty}</p>}
             </div>
             {selected?.id === doc.id && (
-              <div className="ml-auto h-5 w-5 rounded-full bg-[#0F6E56] flex items-center justify-center shrink-0">
+              <div className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sx-orange">
                 <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -610,10 +616,7 @@ function DetailsStep({
 
   return (
     <div>
-      <h1
-        className="text-xl font-bold text-[#1a1a1a] mb-4"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-4 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
         Your details
       </h1>
 
@@ -627,14 +630,14 @@ function DetailsStep({
             placeholder="e.g. Arjun Mehta"
             className={inputClass}
           />
-          {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
+          {errors.fullName && <p className="mt-1 text-xs text-sx-danger">{errors.fullName}</p>}
         </InputField>
 
         <InputField
           label="Mobile number"
           hint="Wrong number? Ask the clinic to resend your booking link."
         >
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-[#1a1a1a] min-h-11 flex items-center">
+          <div className="flex min-h-11 items-center rounded-[22px] border border-sx-stone-200 bg-sx-stone-50 px-4 py-2.5 text-sm text-sx-charcoal">
             {phone}
           </div>
         </InputField>
@@ -652,16 +655,16 @@ function DetailsStep({
         </InputField>
 
         <InputField label="Gender (optional)">
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex overflow-hidden rounded-[22px] border border-sx-stone-200">
             {['Male', 'Female', 'Other'].map((g) => (
               <button
                 key={g}
                 type="button"
                 onClick={() => setGender(gender === g.toLowerCase() ? '' : g.toLowerCase())}
-                className={`flex-1 py-2.5 text-sm font-medium min-h-11 transition-colors ${
+                className={`min-h-11 flex-1 py-2.5 text-sm font-medium transition-colors ${
                   gender === g.toLowerCase()
-                    ? 'bg-[#0F6E56] text-white'
-                    : 'bg-white text-[#6b7280]'
+                    ? 'bg-sx-charcoal text-white'
+                    : 'bg-sx-white text-sx-muted'
                 }`}
               >
                 {g}
@@ -673,15 +676,15 @@ function DetailsStep({
         <InputField label="Booking for">
           <div className="flex gap-3">
             {(['self', 'proxy'] as const).map((v) => (
-              <label key={v} className="flex items-center gap-2 cursor-pointer min-h-11">
+              <label key={v} className="flex min-h-11 cursor-pointer items-center gap-2">
                 <input
                   type="radio"
                   name="bookerRelation"
                   checked={bookerRelation === v}
                   onChange={() => setBookerRelation(v)}
-                  className="accent-[#0F6E56] h-4 w-4"
+                  className="h-4 w-4 accent-sx-orange"
                 />
-                <span className="text-sm text-[#1a1a1a]">
+                <span className="text-sm text-sx-charcoal">
                   {v === 'self' ? 'Myself' : 'Someone else'}
                 </span>
               </label>
@@ -698,7 +701,7 @@ function DetailsStep({
               placeholder="e.g. Rahul Mehta"
               className={inputClass}
             />
-            {errors.proxyName && <p className="text-xs text-red-500 mt-1">{errors.proxyName}</p>}
+            {errors.proxyName && <p className="mt-1 text-xs text-sx-danger">{errors.proxyName}</p>}
           </InputField>
         )}
       </div>
@@ -730,10 +733,7 @@ function SymptomsStep({
 }) {
   return (
     <div>
-      <h1
-        className="text-xl font-bold text-[#1a1a1a] mb-4"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-4 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
         What&apos;s bothering you?
       </h1>
 
@@ -745,13 +745,13 @@ function SymptomsStep({
               onChange={(e) => setSymptoms(e.target.value.slice(0, 500))}
               placeholder="Describe your symptoms..."
               rows={4}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F6E56]/40 focus:border-[#0F6E56] resize-none"
+              className="w-full resize-none rounded-[22px] border border-sx-stone-200 bg-sx-white px-4 py-2.5 text-sm text-sx-charcoal placeholder:text-sx-stone focus:outline-none focus:ring-2 focus:ring-sx-orange/30 focus:border-sx-orange"
             />
-            <span className="absolute bottom-2 right-2 text-xs text-[#6b7280]">
+            <span className="absolute bottom-2 right-3 text-xs text-sx-muted">
               {symptoms.length}/500
             </span>
           </div>
-          {errors.symptoms && <p className="text-xs text-red-500 mt-1">{errors.symptoms}</p>}
+          {errors.symptoms && <p className="mt-1 text-xs text-sx-danger">{errors.symptoms}</p>}
         </InputField>
 
         <InputField label="Additional notes (optional)">
@@ -761,9 +761,9 @@ function SymptomsStep({
               onChange={(e) => setNotes(e.target.value.slice(0, 300))}
               placeholder="Any additional information for the doctor..."
               rows={3}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F6E56]/40 focus:border-[#0F6E56] resize-none"
+              className="w-full resize-none rounded-[22px] border border-sx-stone-200 bg-sx-white px-4 py-2.5 text-sm text-sx-charcoal placeholder:text-sx-stone focus:outline-none focus:ring-2 focus:ring-sx-orange/30 focus:border-sx-orange"
             />
-            <span className="absolute bottom-2 right-2 text-xs text-[#6b7280]">
+            <span className="absolute bottom-2 right-3 text-xs text-sx-muted">
               {notes.length}/300
             </span>
           </div>
@@ -828,24 +828,21 @@ export function SlotStep({
 
   return (
     <div>
-      <h1
-        className="text-xl font-bold text-[#1a1a1a] mb-0.5"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-0.5 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
         Choose a time
       </h1>
-      <p className="text-sm text-[#6b7280] mb-5">With Dr. {doctor.fullName}</p>
+      <p className="mb-5 text-sm text-sx-muted">With Dr. {doctor.fullName}</p>
 
       {/* Date dropdown */}
       <div className="mb-5">
-        <label className="block text-sm font-medium text-[#1a1a1a] mb-1.5">
-          Select date <span className="text-[#0F6E56]">*</span>
+        <label className="mb-1.5 block text-sm font-medium text-sx-charcoal">
+          Select date <span className="text-sx-orange">*</span>
         </label>
         <div className="relative">
           <select
             value={selectedDate}
             onChange={(e) => onDateChange(e.target.value)}
-            className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 pr-9 text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#0F6E56]/40 focus:border-[#0F6E56] min-h-11"
+            className="min-h-11 w-full appearance-none rounded-[22px] border border-sx-stone-200 bg-sx-white px-4 py-2.5 pr-9 text-sm text-sx-charcoal focus:outline-none focus:ring-2 focus:ring-sx-orange/30 focus:border-sx-orange"
           >
             <option value="">— Pick a date —</option>
             {dates.map((d) => (
@@ -853,7 +850,7 @@ export function SlotStep({
             ))}
           </select>
           {/* chevron */}
-          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280]">
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sx-muted">
             <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
               <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -863,17 +860,17 @@ export function SlotStep({
 
       {/* Slots area */}
       {!dateSelected && (
-        <div className="rounded-xl border border-dashed border-gray-200 p-5 text-center mb-5">
-          <p className="text-sm text-[#6b7280]">Select a date to see available times</p>
+        <div className="mb-5 rounded-[22px] border border-dashed border-sx-stone-200 p-5 text-center">
+          <p className="text-sm text-sx-muted">Select a date to see available times</p>
         </div>
       )}
 
       {dateSelected && loading && (
         <div>
-          <p className="text-xs font-medium text-[#6b7280] mb-2 uppercase tracking-wide">Available times</p>
-          <div className="grid grid-cols-4 gap-2 mb-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sx-muted">Available times</p>
+          <div className="mb-4 grid grid-cols-4 gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-11 rounded-lg bg-gray-100 animate-pulse" />
+              <div key={i} className="h-11 animate-pulse rounded-[16px] bg-sx-stone-50" />
             ))}
           </div>
         </div>
@@ -881,22 +878,22 @@ export function SlotStep({
 
       {showSlots && (
         <div>
-          <p className="text-xs font-medium text-[#6b7280] mb-2 uppercase tracking-wide">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sx-muted">
             {slots.length} time{slots.length !== 1 ? 's' : ''} available
           </p>
-          <div className="grid grid-cols-4 gap-2 mb-3">
+          <div className="mb-3 grid grid-cols-4 gap-2">
             {slots.map((slot) => (
               <button
                 key={slot.start}
                 type="button"
                 onClick={() => onSelect(selected === slot.start ? null : slot.start)}
-                className={`rounded-lg border py-2.5 px-1 text-center min-h-11 transition-colors ${
+                className={`min-h-11 rounded-[16px] border px-1 py-2.5 text-center transition-colors ${
                   selected === slot.start
-                    ? 'border-[#0F6E56] bg-[#E1F5EE]'
-                    : 'border-gray-200 bg-white hover:border-[#0F6E56]/40'
+                    ? 'border-sx-orange bg-sx-orange-tint'
+                    : 'border-sx-stone-200 bg-sx-white hover:border-sx-orange/40'
                 }`}
               >
-                <p className={`text-xs font-semibold ${selected === slot.start ? 'text-[#0F6E56]' : 'text-[#1a1a1a]'}`}>
+                <p className={`text-xs font-semibold ${selected === slot.start ? 'text-sx-orange' : 'text-sx-charcoal'}`}>
                   {getSlotTime(slot.start)}
                 </p>
               </button>
@@ -906,9 +903,9 @@ export function SlotStep({
       )}
 
       {showEmpty && (
-        <div className="rounded-xl bg-[#E1F5EE] border border-[#0F6E56]/20 p-4 mb-4 text-sm">
-          <p className="font-semibold text-[#0F6E56] mb-1">No slots available on this day</p>
-          <p className="text-[#6b7280] text-xs">Please try a different date.</p>
+        <div className="mb-4 rounded-[22px] border border-sx-orange/20 bg-sx-orange-tint p-4 text-sm">
+          <p className="mb-1 font-medium text-sx-orange-deep">No slots available on this day</p>
+          <p className="text-xs text-sx-muted">Please try a different date.</p>
         </div>
       )}
 
@@ -964,31 +961,28 @@ function ReviewStep({
 
   return (
     <div>
-      <h1
-        className="text-xl font-bold text-[#1a1a1a] mb-4"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-4 text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
         Confirm your booking
       </h1>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
+      <div className="mb-5 overflow-hidden rounded-[22px] border border-sx-stone-100">
         {rows.map((row, i) => (
           <div
             key={i}
-            className={`flex justify-between gap-3 px-4 py-3 ${i !== rows.length - 1 ? 'border-b border-gray-100' : ''}`}
+            className={`flex justify-between gap-3 px-4 py-3 ${i !== rows.length - 1 ? 'border-b border-sx-stone-100' : ''}`}
           >
-            <span className="text-xs text-[#6b7280] shrink-0 pt-0.5">{row.label}</span>
-            <span className="text-sm text-[#1a1a1a] text-right">{row.value}</span>
+            <span className="shrink-0 pt-0.5 text-xs text-sx-muted">{row.label}</span>
+            <span className="text-right text-sm text-sx-charcoal">{row.value}</span>
           </div>
         ))}
       </div>
 
       {error && (
-        <p className="text-xs text-red-500 text-center mb-3 bg-red-50 rounded-lg py-2 px-3">{error}</p>
+        <p className="mb-3 rounded-[16px] bg-sx-danger-soft px-3 py-2 text-center text-xs text-sx-danger">{error}</p>
       )}
 
       <div className="space-y-3">
-        <PrimaryBtn onClick={onSubmit} loading={submitting} disabled={submitting}>
+        <PrimaryBtn onClick={onSubmit} loading={submitting} disabled={submitting} variant="orange">
           {submitting ? 'Booking…' : 'Confirm booking'}
         </PrimaryBtn>
         <BackBtn onClick={onBack} />
@@ -1009,10 +1003,10 @@ function SuccessStep({
   const gcalUrl = data.timeslot ? buildGCalUrl(data.timeslot, clinic, doctor) : null
 
   return (
-    <div className="text-center py-2">
-      {/* Checkmark */}
-      <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-[#E1F5EE] flex items-center justify-center">
-        <svg className="h-8 w-8 text-[#0F6E56]" viewBox="0 0 24 24" fill="none">
+    <div className="py-2 text-center">
+      {/* Checkmark — the one dominant, celebratory moment of this screen */}
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sx-orange-tint">
+        <svg className="h-8 w-8 text-sx-orange" viewBox="0 0 24 24" fill="none">
           <path
             d="M5 13l4 4L19 7"
             stroke="currentColor"
@@ -1023,19 +1017,16 @@ function SuccessStep({
         </svg>
       </div>
 
-      <h1
-        className="text-2xl font-bold text-[#1a1a1a] mb-1"
-        style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}
-      >
+      <h1 className="mb-1 text-2xl font-medium tracking-[-0.02em] text-sx-charcoal">
         You&apos;re booked!
       </h1>
-      <p className="text-sm text-[#6b7280] mb-5">Your appointment has been confirmed.</p>
+      <p className="mb-5 text-sm text-sx-muted">Your appointment has been confirmed.</p>
 
       {/* Confirmation card */}
-      <div className="rounded-xl border border-gray-200 text-left overflow-hidden mb-5">
-        <div className="bg-[#E1F5EE] px-4 py-2.5 flex items-center justify-between">
-          <span className="text-xs font-semibold text-[#0F6E56]">Appointment confirmed</span>
-          <span className="text-[10px] bg-[#0F6E56] text-white rounded-full px-2 py-0.5">Confirmed</span>
+      <div className="mb-5 overflow-hidden rounded-[22px] border border-sx-stone-100 text-left">
+        <div className="flex items-center justify-between bg-sx-orange-tint px-4 py-2.5">
+          <span className="text-xs font-semibold text-sx-orange-deep">Appointment confirmed</span>
+          <span className="rounded-full bg-sx-orange px-2 py-0.5 text-[10px] text-white">Confirmed</span>
         </div>
         {[
           { label: 'Doctor', value: `Dr. ${data.doctor.fullName}` },
@@ -1048,10 +1039,10 @@ function SuccessStep({
         ].map((row, i, arr) => (
           <div
             key={i}
-            className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}
+            className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-sx-stone-100' : ''}`}
           >
-            <span className="text-xs text-[#6b7280] shrink-0">{row.label}</span>
-            <span className="text-sm text-[#1a1a1a] text-right">{row.value}</span>
+            <span className="shrink-0 text-xs text-sx-muted">{row.label}</span>
+            <span className="text-right text-sm text-sx-charcoal">{row.value}</span>
           </div>
         ))}
       </div>
@@ -1061,7 +1052,7 @@ function SuccessStep({
           href={gcalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full rounded-lg border-2 border-[#0F6E56] text-[#0F6E56] text-sm font-semibold py-3 min-h-11 items-center justify-center gap-2"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-sx-stone-200 bg-sx-stone-50 py-3 text-sm font-medium text-sx-charcoal transition-colors hover:bg-sx-stone-100"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
             <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />

@@ -88,48 +88,48 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
   const doctorForSlotStep: Doctor | null = doctor ? { ...doctor, avatarUrl: null } : null
 
   return (
-    <div className="min-h-screen bg-gray-100 py-4 px-3" style={{ fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}>
+    <div className="min-h-screen bg-sx-canvas px-3 py-4">
       <div className="mx-auto max-w-[440px]">
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#0F6E56] px-4 py-3 text-white">
-            <p className="font-semibold text-base leading-tight">{clinic.name}</p>
-            {doctor && <p className="text-xs text-white/70 mt-0.5">Dr. {doctor.fullName}</p>}
+        <div className="overflow-hidden rounded-[32px] shadow-[0_1px_2px_rgba(24,24,24,0.02),0_16px_44px_rgba(24,24,24,0.07)]">
+          <div className="bg-sx-charcoal px-5 py-4 text-white">
+            <p className="text-base font-medium leading-tight tracking-[-0.01em]">{clinic.name}</p>
+            {doctor && <p className="mt-0.5 text-xs text-white/60">Dr. {doctor.fullName}</p>}
           </div>
 
-          <div className="bg-white px-4 pt-5 pb-6">
+          <div className="bg-sx-white px-5 pb-6 pt-5">
             {mode === 'view' && (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-xl font-bold text-[#1a1a1a]" style={{ fontFamily: 'var(--font-dm-serif, Georgia, serif)' }}>
+                <div className="mb-4 flex items-center justify-between">
+                  <h1 className="text-xl font-medium tracking-[-0.02em] text-sx-charcoal">
                     Your appointment
                   </h1>
                   <StatusBadge status={appointment.status} />
                 </div>
 
-                <div className="rounded-xl border border-gray-200 overflow-hidden mb-5">
+                <div className="mb-5 overflow-hidden rounded-[22px] border border-sx-stone-100">
                   {[
                     { label: 'Doctor', value: doctor ? `Dr. ${doctor.fullName}${doctor.specialty ? ` · ${doctor.specialty}` : ''}` : '—' },
                     { label: 'Clinic', value: clinic.name },
                     { label: 'Time', value: appointment.timeslot ? formatReviewDate(appointment.timeslot) : 'To be confirmed' },
                     ...(appointment.symptoms ? [{ label: 'Symptoms', value: appointment.symptoms }] : []),
                   ].map((row, i, arr) => (
-                    <div key={i} className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                      <span className="text-xs text-[#6b7280] shrink-0 pt-0.5">{row.label}</span>
-                      <span className="text-sm text-[#1a1a1a] text-right">{row.value}</span>
+                    <div key={i} className={`flex justify-between gap-3 px-4 py-3 ${i !== arr.length - 1 ? 'border-b border-sx-stone-100' : ''}`}>
+                      <span className="shrink-0 pt-0.5 text-xs text-sx-muted">{row.label}</span>
+                      <span className="text-right text-sm text-sx-charcoal">{row.value}</span>
                     </div>
                   ))}
                 </div>
 
-                {error && <p className="text-xs text-red-500 text-center mb-3 bg-red-50 rounded-lg py-2 px-3">{error}</p>}
+                {error && <p className="mb-3 rounded-[16px] bg-sx-danger-soft px-3 py-2 text-center text-xs text-sx-danger">{error}</p>}
 
                 {isBooked && (commsLinks?.textCommsUrl || commsLinks?.reviewUrl) && (
-                  <div className="flex gap-2 mb-3">
+                  <div className="mb-3 flex gap-2">
                     {commsLinks.textCommsUrl && (
                       <a
                         href={commsLinks.textCommsUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center rounded-lg border border-[#0F6E56]/20 bg-[#E1F5EE] px-3 py-2.5 text-sm font-medium text-[#0F6E56]"
+                        className="flex-1 rounded-[16px] border border-sx-orange/20 bg-sx-orange-tint px-3 py-2.5 text-center text-sm font-medium text-sx-orange-deep"
                       >
                         Message us
                       </a>
@@ -139,7 +139,7 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
                         href={commsLinks.reviewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-medium text-[#1a1a1a]"
+                        className="flex-1 rounded-[16px] border border-sx-stone-200 px-3 py-2.5 text-center text-sm font-medium text-sx-charcoal"
                       >
                         Leave a review
                       </a>
@@ -156,7 +156,7 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
                       type="button"
                       onClick={confirmCancel}
                       disabled={busy}
-                      className="w-full rounded-lg border border-red-200 px-4 py-3 text-sm font-medium text-red-600 min-h-11 disabled:opacity-60"
+                      className="min-h-[56px] w-full rounded-full border border-sx-danger/25 px-6 py-3.5 text-sm font-medium text-sx-danger transition-colors hover:bg-sx-danger-soft disabled:opacity-60"
                     >
                       Cancel appointment
                     </button>
@@ -167,7 +167,7 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
 
             {mode === 'reschedule' && doctorForSlotStep && (
               <div>
-                {error && <p className="text-xs text-red-500 text-center mb-3 bg-red-50 rounded-lg py-2 px-3">{error}</p>}
+                {error && <p className="mb-3 rounded-[16px] bg-sx-danger-soft px-3 py-2 text-center text-xs text-sx-danger">{error}</p>}
                 <SlotStep
                   doctor={doctorForSlotStep}
                   selectedDate={selectedDate}
@@ -180,7 +180,7 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
                   onBack={() => { setMode('view'); setError('') }}
                   onContinue={confirmReschedule}
                 />
-                {busy && <p className="text-xs text-center text-[#6b7280] mt-3">Saving…</p>}
+                {busy && <p className="mt-3 text-center text-xs text-sx-muted">Saving…</p>}
               </div>
             )}
           </div>
@@ -192,10 +192,10 @@ export default function AppointmentManageView({ clinicId, appointmentId, initial
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    booked: 'bg-[#E1F5EE] text-[#0F6E56]',
-    cancelled: 'bg-red-50 text-red-600',
-    blocked: 'bg-gray-100 text-gray-600',
+    booked: 'bg-sx-success-soft text-sx-success',
+    cancelled: 'bg-sx-danger-soft text-sx-danger',
+    blocked: 'bg-sx-stone-100 text-sx-muted',
   }
   const label = status.charAt(0).toUpperCase() + status.slice(1)
-  return <span className={`text-[10px] font-semibold rounded-full px-2 py-1 ${styles[status] ?? 'bg-gray-100 text-gray-600'}`}>{label}</span>
+  return <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${styles[status] ?? 'bg-sx-stone-100 text-sx-muted'}`}>{label}</span>
 }

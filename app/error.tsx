@@ -14,19 +14,19 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center space-y-4 max-w-sm">
-        <p className="text-4xl font-bold text-red-500">!</p>
-        <h1 className="text-xl font-semibold text-[#1a1a1a]">Something went wrong</h1>
-        <p className="text-gray-500 text-sm">
+    <div className="flex min-h-screen items-center justify-center bg-sx-canvas">
+      <div className="max-w-sm space-y-4 text-center">
+        <p className="text-4xl font-medium text-sx-danger">!</p>
+        <h1 className="text-xl font-medium tracking-[-0.02em] text-sx-charcoal">Something went wrong</h1>
+        <p className="text-sm text-sx-muted">
           An unexpected error occurred. Please try again or contact support if the problem persists.
         </p>
         {error.digest && (
-          <p className="text-xs text-gray-400 font-mono">Error ID: {error.digest}</p>
+          <p className="font-mono text-xs text-sx-stone">Error ID: {error.digest}</p>
         )}
         <button
           onClick={reset}
-          className="px-5 py-2 bg-[#0F6E56] text-white rounded-lg text-sm hover:bg-[#0a5a44] transition-colors"
+          className="rounded-full bg-sx-charcoal px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sx-charcoal/90"
         >
           Try again
         </button>
